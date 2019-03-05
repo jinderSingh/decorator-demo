@@ -1,0 +1,35 @@
+<form novalidate>
+
+  <div class="form-group">
+    <label for="">Without headers</label>
+    <br>
+    <input type="file" (change)="readExcelFile($event)">
+  </div>
+  <div class="form-group">
+    <label for="">With headers</label>
+    <br>
+    <input type="file" (change)="readExcelFileWithHeaders($event)">
+  </div>
+</form>
+
+
+<h4>Without headers</h4>
+<ul>
+
+    <li *ngFor="let result of results">
+      Name: {{result.name}}
+      Total: {{result.total}}
+    </li>
+
+</ul>
+
+<h4>With headers</h4>
+<ul>
+
+  <li *ngFor="let result of resultsWithHeaders">
+    Name: {{result.name}}
+    Total: {{result.total}}
+  </li>
+
+</ul>
+
