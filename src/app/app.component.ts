@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { excelRows } from 'excel-to-object-decorator';
+import { excelData, excelToObjectParser } from 'excel-to-object-decorator';
+import { objectToExcel } from 'excel-to-object-decorator/dist/object-to-excel';
 import * as XLSX from 'xlsx';
 import { ResultWithHeadersType } from './models/result-with-headers.type';
 import { ResultType } from './models/result.type';
@@ -13,11 +14,8 @@ import { ResultType } from './models/result.type';
 export class AppComponent {
   title = 'decorator-demo';
 
-
-  @excelRows(ResultType)
   results: any;
 
-  @excelRows(ResultWithHeadersType)
   resultsWithHeaders: any;
 
 
@@ -46,12 +44,16 @@ export class AppComponent {
       const data = (XLSX.utils.sheet_to_json(ws, {
         header: 1
       }));
-      this.resultsWithHeaders = {
-        headers: data[0],
-        results: data.slice(1)
-      };
+      this.resultsWithHeaders = this.handleData(data);
     };
     reader.readAsBinaryString(target.files[0]);
+  }
+
+
+  @excelToObjectParser(ResultWithHeadersType, {headerRowIndex: 0}) // or
+  // @excelToObjectParser(ResultWithHeadersType, {headers: ['name', 'price']})
+  private handleData(@excelData data: any) {
+    return data;
   }
 
   /**
@@ -78,9 +80,34 @@ export class AppComponent {
       const data = (XLSX.utils.sheet_to_json(ws, {
         header: 1
       }));
-      this.results = data;
+      this.results = this.handleDataWithoutHeaders(data);
     };
     reader.readAsBinaryString(target.files[0]);
+  }
+
+  @excelToObjectParser(ResultType)
+  private handleDataWithoutHeaders(@excelData data: any) {
+    // do business logic with mapper data
+    data.forEach(element => console.log(element.name));
+  }
+
+
+  export(): void {
+    const data = objectToExcel(ResultWithHeadersType)(this.resultsWithHeaders);
+    const dataWithoutHeaders = objectToExcel(ResultType)(this.results);
+
+    /* generate worksheet */
+    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(dataWithoutHeaders);
+    const wsWithHeaders: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
+
+    /* generate workbook and add the worksheet */
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Without headers');
+    XLSX.utils.book_append_sheet(wb, wsWithHeaders, 'With headers');
+
+    /* save to file */
+    XLSX.writeFile(wb, 'SheetJS.xlsx');
+    return;
   }
 
 }
